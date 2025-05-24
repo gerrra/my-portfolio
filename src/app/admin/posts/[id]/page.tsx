@@ -3,22 +3,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getPostById, updatePost } from '@/lib/api/posts';
 import { useParams, useRouter } from 'next/navigation';
-import { useStore } from '@/store/useStore';
 
 export default function EditPostPage() {
     const params = useParams();
     const router = useRouter();
-    const id = parseInt(params.id as string);
+    const id = params.id as string;
     const [title, setTitle] = useState<string | null>(null);
     const [content, setContent] = useState<string | null>(null);
 
     useEffect(
         () => {
-            useStore.setState({ loading: true });
             getPostById(id).then(post => {
                 setTitle(post.title);
                 setContent(post.content);
-                useStore.setState({ loading: false });
             });
         },
         [id],
@@ -28,11 +25,9 @@ export default function EditPostPage() {
         (e: React.FormEvent) => {
             e.preventDefault();
             if (!title || !content) return;
-            useStore.setState({ loading: true });
 
             updatePost(id, { title, content })
                 .then(() => router.push('/admin/posts'))
-                .catch(() => useStore.setState({ loading: false }));
         },
         [title, content, router, id],
     );

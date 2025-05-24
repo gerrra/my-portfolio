@@ -1,8 +1,10 @@
-import Link from 'next/link'
-import './globals.css'
-import { Loading } from '@/components/loading/Loading'
+import Link from 'next/link';
+import './globals.css';
+import { Loading } from '@/components/loading/Loading';
+import { LoginButton } from '../components/auth/LoginButton';
+import { AdminMenu } from '../components/adminMenu/AdminMenu';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html
             lang='en'
@@ -25,23 +27,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                         z-1
                     '
                 >
-                    <nav
+                    <div
                         className='
                             flex
-                            gap-4
+                            w-full
                         '
                     >
-                        <Link
-                            href='/'
+                        <nav
+                            className='
+                                flex
+                                w-full
+                                gap-4
+                                items-center
+                            '
                         >
-                            Main
-                        </Link>
-                        <Link
-                            href='/admin/posts'
-                        >
-                            Posts
-                        </Link>
-                    </nav>
+                            <Link
+                                href='/'
+                            >
+                                Main
+                            </Link>
+                            <Link
+                                href='/blog'
+                            >
+                                Blog
+                            </Link>
+                            <AdminMenu />
+                        </nav>
+                        <LoginButton />
+                    </div>
                 </header>
                 <main>
                     {children}

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getPosts, createPost, deletePost } from '@/lib/api/posts';
 import { Post } from '@/models/post';
 import { useRouter } from 'next/navigation';
-import { useStore } from '@/store/useStore';
+import ReactMarkdown from 'react-markdown';
 
 export default function AdminPostsPage() {
     const router = useRouter();
@@ -12,28 +12,22 @@ export default function AdminPostsPage() {
     const [title, setTitle] = useState<string | null>(null);
     const [content, setContent] = useState<string | null>(null);
 
-    const loadPosts = () => {
-        getPosts()
-            .then((postList: Post[]) => {
-                setPosts(postList);
-                useStore.setState({ loading: false });
-            })
-            .catch(() => useStore.setState({ loading: false }))
-    };
-
-    useEffect(
+    const loadPosts = useCallback(
         () => {
-            useStore.setState({ loading: true });
-            loadPosts();
+            getPosts().then(setPosts);
         },
         [],
+    );
+
+    useEffect(
+        () => loadPosts(),
+        [loadPosts],
     );
 
     const handleSubmit = useCallback(
         (e: React.FormEvent) => {
             e.preventDefault();
             if (!title || !content) return;
-            useStore.setState({ loading: true });
 
             createPost({ title, content })
                 .then(() => {
@@ -41,29 +35,26 @@ export default function AdminPostsPage() {
                     setContent('');
                     loadPosts();
                 })
-                .catch(() => useStore.setState({ loading: false }));
         },
-        [title, content],
+        [title, content, loadPosts],
     );
 
     const editPost = useCallback(
-        (id: number) => {
+        (id: string) => {
             router.push(`/admin/posts/${id}`)
         },
         [router],
     );
 
     const deletePostAction = useCallback(
-        (id: number) => {
-            useStore.setState({ loading: true });
+        (id: string) => {
             deletePost(id)
                 .catch((err: string) => {
                     console.error('Ошибка при удалении:', err)
-                    useStore.setState({ loading: false });
                 })
                 .then(loadPosts);
         },
-        [],
+        [loadPosts],
     );
 
     return (
@@ -172,14 +163,16 @@ export default function AdminPostsPage() {
                                         >
                                             {post.title}
                                         </h2>
-                                        <p
+                                        <div
                                             className='
                                                 text-sm
                                                 mb-2
                                             '
                                         >
-                                            {post.content}
-                                        </p>
+                                            <ReactMarkdown>
+                                                {post.content}
+                                            </ReactMarkdown>
+                                        </div>
                                         <p
                                             className='
                                                 text-xs

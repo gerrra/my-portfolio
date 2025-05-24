@@ -1,11 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { logAction } from '../../../../lib/log';
+import { verifyJwt } from '../../../../lib/jwt';
 
 export async function GET(
     req: Request,
     { params }: { params: { id: string } }
 ) {
-    const id = parseInt(params.id);
+    const { id } = await params;
     const post = await prisma.post.findUnique({ where: { id } });
 
     if (!post) {
@@ -16,16 +18,23 @@ export async function GET(
 }
 
 export async function PUT(
-    req: Request,
+    req: NextRequest,
     { params }: { params: { id: string } }
 ) {
-    const id = parseInt(params.id);
+    const { id } = await params;
     const body = await req.json();
     const { title, content } = body;
 
     if (!title || !content) {
         return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
     }
+
+    const token = req.cookies.get('admin_auth')?.value;
+    const decoded = token ? verifyJwt(token) : null;
+    const userEmail = decoded?.email;
+    const role = decoded?.role;
+
+    await logAction('UPDATE_POST', `Post ID: ${params.id}`, userEmail, role);
 
     const post = await prisma.post.update({
         where: { id },
@@ -36,12 +45,24 @@ export async function PUT(
 }
 
 export async function DELETE(
-    req: Request,
-    { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
-    const id = parseInt(params.id);
+    try {
+        await prisma.post.delete({
+            where: { id: params.id },
+        });
 
-    const post = await prisma.post.delete({ where: { id } });
+        const token = req.cookies.get('admin_auth')?.value;
+        const decoded = token ? verifyJwt(token) : null;
+        const userEmail = decoded?.email;
+        const role = decoded?.role;
 
-    return NextResponse.json(post);
+        await logAction('DELETE_POST', `Post ID: ${params.id}`, userEmail, role);
+
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        console.error('Delete failed:', err);
+        return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
 }

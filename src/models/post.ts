@@ -2,7 +2,7 @@ import * as t from 'io-ts'
 import { DateFromISOString } from 'io-ts-types';
 
 export const PostType = t.type({
-    id: t.number,
+    id: t.string,
     title: t.union([t.string, t.null, t.undefined]),
     content: t.union([t.string, t.null, t.undefined]),
     createdAt: t.union([DateFromISOString, t.null, t.undefined]),
@@ -12,7 +12,7 @@ export const PostType = t.type({
 export type PostDTO = t.TypeOf<typeof PostType>;
 
 class Post {
-    id: number;
+    id: string;
     title: string | null;
     content: string | null;
     createdAt: Date | null;
